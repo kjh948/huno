@@ -121,15 +121,15 @@ class servo:
         data = self.ser.read(1)
         if data:
             data_unpacked = struct.unpack('>B', data)
-            print (f1 + ': 0x%s (%d)' % (data.encode('hex'),
+            print (f1 + ': 0x%s (%d)' % (data.hex(),
                     data_unpacked[0x00]))
         data = self.ser.read(1)
         if data:
             data_unpacked = struct.unpack('>B', data)
-            print (f2 + ': 0x%s (%d)' % (data.encode('hex'),
+            print (f2 + ': 0x%s (%d)' % (data.hex(),
                     data_unpacked[0x00]))
-            # return data_unpacked
-        # return -1
+            return data_unpacked
+        return -1
 
     # READ STATUS
 
