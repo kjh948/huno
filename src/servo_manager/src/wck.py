@@ -19,29 +19,26 @@ import array
 
 class servo:
 
-    port = '/dev/tty.SLAB_USBtoUART'
+    port = '/dev/ttyUSB0'
     baud = 115200
     HEADER = 255
     sid = 0x00
     ser = 0x00
-    baudrates = [921600, 460800, 230400, 115200, 57600, 38400, 9600, 4800]
+    baudrates = [115200]
         
 
     def __init__(
         self,
         port,
-        baud,
-        id,
+        baud
         ):
         self.data = []
         if port:
             self.port = port
         if baud:
             self.baud = baud
-        if id:
-            self.sid = id
-        self.ser = serial.Serial(self.port, self.baud, timeout=3)
-
+        self.ser = serial.Serial(self.port, self.baud, timeout=1)
+        
     def connect(
         self,
         port,
@@ -133,66 +130,86 @@ class servo:
 
     # READ STATUS
 
-    def readStatus(self):
-        self._sendCmd(5 << 5 | self.sid, 0x00)
-        self._read('Load', 'Position')
+    def readStatus(self, id):
+        self._sendCmd(5 << 5 | id, 0x00)
+        return self._read('Load', 'Position')
 
     # READ CURRENT SERVO POSITION
 
-    def readPos(self):
-        self._sendCmd(0xa0 | self.sid, 0x00)
+    def readPos(self, id):
+        self._sendCmd(0xa0 | id, 0x00)
         return self._read('Load', 'Position')
 
 
     # MOVE SERVO TO SPECIFIED TARGET POSITION (1-254)
 
-    def pos(self, torque, target):
-        self._sendCmd(torque << 5 | self.sid, target)
-        self._read('Load', 'Position')
+    def pos(self, id, torque, target):
+        self._sendCmd(torque << 5 | id, target)
+        return self._read('Load', 'Position')
 
     # ROTATE WHEEL IN CLOCKWISE DIRECTION AT GIVEN SPEED (1-15, 0: stop)
 
-    def cw(self, speed):
-        self._sendCmd(6 << 5 | self.sid, 4 << 4 | speed)
-        self._read('No. of Rotation', 'Position')
+    def cw(self, id, speed):
+        self._sendCmd(6 << 5 | id, 4 << 4 | speed)
+        return self._read('No. of Rotation', 'Position')
 
     # ROTATE WHEEL IN COUNTER-CLOCKWISE DIRECTION AT GIVEN SPEED (1-15, 0: stop)....
 
-    def ccw(self, speed):
-        self._sendCmd(6 << 5 | self.sid, 3 << 4 | speed)
+    def ccw(self, id, speed):
+        self._sendCmd(6 << 5 | id, 3 << 4 | speed)
         self._read('No. of Rotation', 'Position')
 
     # SET SERVO ID
 
-    def setID(self, newid):
-        self._sendSetCmd(7 << 5 | self.sid, 0x0C, newid, newid)
-        self._read('New ID', 'New ID')
+    def setID(self, id, newid):
+        self._sendSetCmd(7 << 5 | id, 0x0C, newid, newid)
+        return self._read('New ID', 'New ID')
 
     # READ SPEED
 
-    def readSpeed(self):
-        self._sendSetCmd(7 << 5 | self.sid, 0x0E, 0x00, 0x00)
-        self._read('Speed', 'Acceleration')
+    def readSpeed(self, id):
+        self._sendSetCmd(7 << 5 | id, 0x0E, 0x00, 0x00)
+        return self._read('Speed', 'Acceleration')
 
     # SET SPEED (0-30) and ACCELERATION (20-100)
 
-    def setSpeed(self, speed, accel):
-        self._sendSetCmd(7 << 5 | self.sid, 0x0D, speed, accel)
-        self._read('Speed', 'Acceleration')
+    def setSpeed(self, id, speed, accel):
+        self._sendSetCmd(7 << 5 | id, 0x0D, speed, accel)
+        return self._read('Speed', 'Acceleration')
 
-    def readPD(self):
-        self._sendSetCmd(7 << 5 | self.sid, 0x0A, 0x00, 0x00)
-        self._read('P-Gain', 'D-Gain')
+    def readPD(self, id):
+        self._sendSetCmd(7 << 5 | id, 0x0A, 0x00, 0x00)
+        return self._read('P-Gain', 'D-Gain')
 
-    def readI(self):
-        self._sendSetCmd(7 << 5 | self.sid, 0x16, 0x00, 0x00)
-        self._read('I-Gain', 'I-Gain')
+    def readI(self, id):
+        self._sendSetCmd(7 << 5 | id, 0x16, 0x00, 0x00)
+        return self._read('I-Gain', 'I-Gain')
 
-    def passivate(self):
-        self._sendCmd(6 << 5 | self.sid, 1 << 4 | 0x00)
-        self._read('Data2', 'Position')
+    def passivate(self, id):
+        self._sendCmd(6 << 5 | id, 1 << 4 | 0x00)
+        return self._read('Data2', 'Position')
 
     # CLOSE SERIAL PORT
 
     def close(self):
         self.ser.close()
+
+
+if __name__=="__main__":
+    a = servo("/dev/ttyUSB0",115200)
+
+    a.scan()
+    id = 14
+    curpos = a.readPos(id)
+
+    print("current pos", curpos[0])
+
+    delta = 30
+    a.pos(id, 4,curpos[0]+delta)
+    time.sleep(1)
+    a.pos(id, 4,curpos[0]-delta)
+    time.sleep(1)
+
+    a.pos(id, 4,curpos[0])
+    time.sleep(1)
+    a.close()
