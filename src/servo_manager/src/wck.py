@@ -125,7 +125,7 @@ class servo:
             data_unpacked = struct.unpack('>B', data)
             print (f2 + ': 0x%s (%d)' % (data.hex(),
                     data_unpacked[0x00]))
-            return data_unpacked
+            return data_unpacked[0]
         return -1
 
     # READ STATUS
@@ -202,14 +202,14 @@ if __name__=="__main__":
     id = 14
     curpos = a.readPos(id)
 
-    print("current pos", curpos[0])
+    print("current pos", curpos)
 
     delta = 30
-    a.pos(id, 4,curpos[0]+delta)
+    a.pos(id, 4,curpos+delta)
     time.sleep(1)
-    a.pos(id, 4,curpos[0]-delta)
+    a.pos(id, 4,curpos-delta)
     time.sleep(1)
 
-    a.pos(id, 4,curpos[0])
+    a.pos(id, 4,curpos)
     time.sleep(1)
     a.close()

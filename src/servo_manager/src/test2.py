@@ -1,18 +1,18 @@
 from wck import servo
 import time
 
-a = servo("/dev/ttyUSB0",115200,14)
+a = servo("/dev/ttyUSB0",115200)
 
-curpos = a.readPos()
+curpos = a.readPos(14)
 
-print("current pos", curpos[0])
+print("current pos", curpos)
 
-delta = 30
-a.pos(4,curpos[0]+delta)
+delta = 15
+a.pos(14, 4,curpos+delta)
 time.sleep(1)
-a.pos(4,curpos[0]-delta)
+a.pos(14, 4,curpos-delta)
 time.sleep(1)
 
-a.pos(4,curpos[0])
+a.pos(14, 4,curpos)
 time.sleep(1)
 a.close()
