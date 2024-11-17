@@ -147,6 +147,13 @@ class servo:
         self._sendCmd(torque << 5 | id, target)
         return self._read('Load', 'Position')
 
+    # MOVE SERVO TO SPECIFIED TARGET POSITION (1-254)
+
+    def posGroup(self, id, torque, target):
+        
+        self._sendCmd(torque << 5 | id, target)
+        return self._read('Load', 'Position')
+    
     # ROTATE WHEEL IN CLOCKWISE DIRECTION AT GIVEN SPEED (1-15, 0: stop)
 
     def cw(self, id, speed):

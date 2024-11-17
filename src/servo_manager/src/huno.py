@@ -17,24 +17,25 @@ class Huno:
         self.offset = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         self.cur_joints = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
-        self.joints = {"j_ankle1_l":0,\
-                    "j_ankle1_r":1,\
-                    "j_ankle2_l":2,\
-                    "j_ankle2_r":3,\
-                    "j_high_arm_l":4,\
-                    "j_high_arm_r":5,\
-                    "j_low_arm_l":6,\
-                    "j_low_arm_r":7,\
-                    "j_pelvis_l":8,\
-                    "j_pelvis_r":9,\
+        self.joints = {
+                    "j_ankle1_l":3,\
+                    "j_ankle1_r":8,\
+                    "j_ankle2_l":4,\
+                    "j_ankle2_r":9,\
+                    "j_tibia_l":2,\
+                    "j_tibia_r":7,\
+                    "j_thigh2_l":1,\
+                    "j_thigh2_r":6,\
+                    "j_pelvis_l":0,\
+                    "j_pelvis_r":5,\
+
                     "j_shoulder_l":10,\
-                    "j_shoulder_r":11,\
-                    "j_thigh2_l":12,\
-                    "j_thigh2_r":13,\
-                    "j_tibia_l":14,\
-                    "j_tibia_r":15,\
-                    "j_wrist_l":16,\
-                    "j_wrist_r":17,\
+                    "j_shoulder_r":13,\
+                    "j_high_arm_l":11,\
+                    "j_high_arm_r":14,\
+                    "j_low_arm_l":12,\
+                    "j_low_arm_r":15,\
+
                     }
         self._sub_joints={}
         # self._pub_joints = {}
