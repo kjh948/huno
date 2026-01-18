@@ -149,10 +149,17 @@ class servo:
 
     # MOVE SERVO TO SPECIFIED TARGET POSITION (1-254)
 
-    def posGroup(self, id, torque, target):
+    def posGroup(self, lastId, torque, target):
+        self.ser.write(struct.pack('<B', 0xff))
+        self.ser.write(struct.pack('<B', torque << 5 | 31))
+        self.ser.write(struct.pack('<B', lastId+1))
         
-        self._sendCmd(torque << 5 | id, target)
-        return self._read('Load', 'Position')
+        chksum = 0xff
+        for idx in range(lastId):
+            self.ser.write(struct.pack('<B', target[idx]))
+            chksum = chksum ^ target[idx]
+    
+        self.ser.write(struct.pack('<B', chksum & 127))
     
     # ROTATE WHEEL IN CLOCKWISE DIRECTION AT GIVEN SPEED (1-15, 0: stop)
 

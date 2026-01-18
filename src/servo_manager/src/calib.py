@@ -2,7 +2,7 @@ from wck import servo
 import time
 import getkey
 
-joints = {          
+joints_ = {          
                     "j_ankle1_l":3,\
                     "j_ankle1_r":8,\
                     "j_ankle2_l":4,\
@@ -26,7 +26,10 @@ joints = {
                     # "j_wrist_r":17,\
                     
                     }
+joints = dict(sorted(joints_.items(), key=lambda x: x[1]))
+
 zero_offset =     [122,208,158,67,103,123,33,91,180,143,70,38,124,171,210,130]
+ready_offset =     [122,208,158,67,103,123,33,91,180,143,70,38,124,171,210,130]
 cur_joints = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
 
@@ -34,10 +37,12 @@ a = servo("/dev/ttyUSB0",115200)
 
 def set_zero_pos():
     print("set zero pos")
-    for name in joints:
-        idx = joints[name]
-        a.pos(idx, 4,zero_offset[idx])
-        print(f"Reading joint: {name} with {idx} -> {a.readPos(idx)}")
+    a.posGroup(zero_offset)
+
+    # for name in joints:
+    #     idx = joints[name]
+    #     a.pos(idx, 4,zero_offset[idx])
+    #     print(f"Reading joint: {name} with {idx} -> {a.readPos(idx)}")
 
 def print_joint():
     for name in joints:
