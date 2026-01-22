@@ -1,0 +1,18 @@
+{
+    "j_ankle1_l": 3,
+    "j_ankle1_r": 8,
+    "j_ankle2_l": 4,
+    "j_ankle2_r": 9,
+    "j_tibia_l": 2,
+    "j_tibia_r": 7,
+    "j_thigh2_l": 1,
+    "j_thigh2_r": 6,
+    "j_pelvis_l": 0,
+    "j_pelvis_r": 5,
+    "j_shoulder_l": 10,
+    "j_shoulder_r": 13,
+    "j_high_arm_l": 11,
+    "j_high_arm_r": 14,
+    "j_low_arm_l": 12,
+    "j_low_arm_r": 15
+}

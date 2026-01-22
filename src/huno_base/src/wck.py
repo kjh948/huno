@@ -147,19 +147,44 @@ class servo:
         self._sendCmd(torque << 5 | id, target)
         return self._read('Load', 'Position')
 
-    # MOVE SERVO TO SPECIFIED TARGET POSITION (1-254)
+    # SYNCHRONIZED POSITION MOVE - Move multiple servos at once
+    # Based on WCKLib.cpp synchronizedPositionMove()
 
     def posGroup(self, lastId, torque, target):
-        self.ser.write(struct.pack('<B', 0xff))
-        self.ser.write(struct.pack('<B', torque << 5 | 31))
-        self.ser.write(struct.pack('<B', lastId+1))
+        """
+        Move multiple servos simultaneously
         
-        chksum = 0xff
-        for idx in range(lastId):
+        Args:
+            lastId: Number of servos to move (e.g., 10 means ID 0-9)
+            torque: Torque level (0=Max, 4=Min)
+            target: List of target positions for each servo
+        
+        Protocol:
+            Header: 0xFF
+            Data1: (torque << 5) | 31
+            Data2: lastId + 1
+            Data3~N: target positions for ID 0 to lastId-1
+            Checksum: (pos[0] ^ pos[1] ^ ... ^ pos[lastId-1]) & 0x7F
+        """
+        self.ser.flushInput()
+        
+        # Header
+        self.ser.write(struct.pack('<B', 0xff))
+        # Data1: Torque and mode 31 (sync move)
+        self.ser.write(struct.pack('<B', (torque << 5) | 31))
+        # Data2: lastId + 1
+        self.ser.write(struct.pack('<B', lastId + 1))
+        
+        # Calculate checksum starting with pos[0]
+        chksum = target[0]
+        self.ser.write(struct.pack('<B', target[0]))
+        
+        for idx in range(1, lastId):
             self.ser.write(struct.pack('<B', target[idx]))
             chksum = chksum ^ target[idx]
-    
-        self.ser.write(struct.pack('<B', chksum & 127))
+        
+        # Send checksum
+        self.ser.write(struct.pack('<B', chksum & 0x7f))
     
     # ROTATE WHEEL IN CLOCKWISE DIRECTION AT GIVEN SPEED (1-15, 0: stop)
 
@@ -210,10 +235,10 @@ class servo:
 
 
 if __name__=="__main__":
-    a = servo("/dev/ttyUSB0",115200)
+    a = servo("/dev/tty.wchusbserial14340",115200)
 
     a.scan()
-    id = 14
+    id = 8
     curpos = a.readPos(id)
 
     print("current pos", curpos)
