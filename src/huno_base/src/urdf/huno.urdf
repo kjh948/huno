@@ -1,0 +1,566 @@
+<?xml version="1.0"?>
+<robot name="huno">
+  <!-- Materials -->
+  <material name="black">
+    <color rgba="0.1 0.1 0.1 1"/>
+  </material>
+  <material name="gray">
+    <color rgba="0.5 0.5 0.5 1"/>
+  </material>
+  <material name="blue">
+    <color rgba="0.2 0.3 0.6 1"/>
+  </material>
+  <material name="white">
+    <color rgba="0.9 0.9 0.9 1"/>
+  </material>
+
+  <!-- Base Link -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/torso.stl"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/torso.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.5"/>
+      <inertia ixx="0.0005" ixy="0" ixz="0" iyy="0.0007" iyz="0" izz="0.0004"/>
+    </inertial>
+  </link>
+
+  <!-- ========== HEAD ========== -->
+  <!-- Joint 12: Head -->
+  <joint name="head_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="head_link"/>
+    <origin xyz="0 0 0.06" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-1.57" upper="1.57" effort="1.5" velocity="5.0"/>
+  </joint>
+
+  <link name="head_link">
+    <visual>
+      <origin xyz="0 0 0.025" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/head.stl"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.025" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/head.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+    </inertial>
+  </link>
+
+  <!-- ========== RIGHT ARM (IDs: 10, 11, 13, 14) ========== -->
+  <!-- Joint 11: Right Shoulder Pitch -->
+  <joint name="r_shoulder_pitch" type="revolute">
+    <parent link="base_link"/>
+    <child link="r_shoulder_pitch_link"/>
+    <origin xyz="0.045 0.02 0.04" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.0" upper="2.0" effort="1.5" velocity="5.0"/>
+  </joint>
+
+  <link name="r_shoulder_pitch_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/shoulder_joint.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/shoulder_joint.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.08"/>
+      <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 10: Right Shoulder Roll -->
+  <joint name="r_shoulder_roll" type="revolute">
+    <parent link="r_shoulder_pitch_link"/>
+    <child link="r_upper_arm_link"/>
+    <origin xyz="0 0 -0.02" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-1.57" upper="1.57" effort="1.5" velocity="5.0"/>
+  </joint>
+
+  <link name="r_upper_arm_link">
+    <visual>
+      <origin xyz="0 0 -0.03" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/upper_arm.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.03" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/upper_arm.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.00003" ixy="0" ixz="0" iyy="0.00003" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 13: Right Elbow -->
+  <joint name="r_elbow" type="revolute">
+    <parent link="r_upper_arm_link"/>
+    <child link="r_forearm_link"/>
+    <origin xyz="0 0 -0.06" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-2.0" upper="0.1" effort="1.5" velocity="5.0"/>
+  </joint>
+
+  <link name="r_forearm_link">
+    <visual>
+      <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/forearm.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/forearm.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.08"/>
+      <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 14: Right Hand -->
+  <joint name="r_hand" type="revolute">
+    <parent link="r_forearm_link"/>
+    <child link="r_hand_link"/>
+    <origin xyz="0 0 -0.05" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.5" upper="0.5" effort="1.0" velocity="5.0"/>
+  </joint>
+
+  <link name="r_hand_link">
+    <visual>
+      <origin xyz="0 0 -0.015" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/hand.stl"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.015" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/hand.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <!-- ========== LEFT ARM (IDs: 10, 11, 13, 14 mirrored) ========== -->
+  <!-- Joint 11: Left Shoulder Pitch -->
+  <joint name="l_shoulder_pitch" type="revolute">
+    <parent link="base_link"/>
+    <child link="l_shoulder_pitch_link"/>
+    <origin xyz="-0.045 0.02 0.04" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.0" upper="2.0" effort="1.5" velocity="5.0"/>
+  </joint>
+
+  <link name="l_shoulder_pitch_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/shoulder_joint.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/shoulder_joint.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.08"/>
+      <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 10: Left Shoulder Roll -->
+  <joint name="l_shoulder_roll" type="revolute">
+    <parent link="l_shoulder_pitch_link"/>
+    <child link="l_upper_arm_link"/>
+    <origin xyz="0 0 -0.02" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-1.57" upper="1.57" effort="1.5" velocity="5.0"/>
+  </joint>
+
+  <link name="l_upper_arm_link">
+    <visual>
+      <origin xyz="0 0 -0.03" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/upper_arm.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.03" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/upper_arm.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.00003" ixy="0" ixz="0" iyy="0.00003" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 13: Left Elbow -->
+  <joint name="l_elbow" type="revolute">
+    <parent link="l_upper_arm_link"/>
+    <child link="l_forearm_link"/>
+    <origin xyz="0 0 -0.06" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-2.0" upper="0.1" effort="1.5" velocity="5.0"/>
+  </joint>
+
+  <link name="l_forearm_link">
+    <visual>
+      <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/forearm.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/forearm.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.08"/>
+      <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 14: Left Hand -->
+  <joint name="l_hand" type="revolute">
+    <parent link="l_forearm_link"/>
+    <child link="l_hand_link"/>
+    <origin xyz="0 0 -0.05" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.5" upper="0.5" effort="1.0" velocity="5.0"/>
+  </joint>
+
+  <link name="l_hand_link">
+    <visual>
+      <origin xyz="0 0 -0.015" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/hand.stl"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.015" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/hand.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <!-- ========== RIGHT LEG (IDs: 00, 01, 02, 03) ========== -->
+  <!-- Joint 00: Right Hip Pitch -->
+  <joint name="r_hip_pitch" type="revolute">
+    <parent link="base_link"/>
+    <child link="r_hip_pitch_link"/>
+    <origin xyz="0.025 -0.01 -0.05" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="2.0" velocity="5.0"/>
+  </joint>
+
+  <link name="r_hip_pitch_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/hip_joint.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/hip_joint.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00002"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 01: Right Hip Roll -->
+  <joint name="r_hip_roll" type="revolute">
+    <parent link="r_hip_pitch_link"/>
+    <child link="r_thigh_link"/>
+    <origin xyz="0 0 -0.02" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.8" upper="0.8" effort="2.0" velocity="5.0"/>
+  </joint>
+
+  <link name="r_thigh_link">
+    <visual>
+      <origin xyz="0 0 -0.035" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/thigh.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.035" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/thigh.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.00007" ixy="0" ixz="0" iyy="0.00007" iyz="0" izz="0.00002"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 02: Right Knee -->
+  <joint name="r_knee" type="revolute">
+    <parent link="r_thigh_link"/>
+    <child link="r_shin_link"/>
+    <origin xyz="0 0 -0.07" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.1" upper="2.0" effort="2.0" velocity="5.0"/>
+  </joint>
+
+  <link name="r_shin_link">
+    <visual>
+      <origin xyz="0 0 -0.035" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/shin.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.035" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/shin.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.12"/>
+      <inertia ixx="0.00005" ixy="0" ixz="0" iyy="0.00005" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 03: Right Ankle -->
+  <joint name="r_ankle" type="revolute">
+    <parent link="r_shin_link"/>
+    <child link="r_foot_link"/>
+    <origin xyz="0 0 -0.07" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.5" upper="0.5" effort="1.5" velocity="5.0"/>
+  </joint>
+
+  <link name="r_foot_link">
+    <visual>
+      <origin xyz="0 0.01 -0.0075" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/foot.stl"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0.01 -0.0075" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/foot.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00003" iyz="0" izz="0.00005"/>
+    </inertial>
+  </link>
+
+  <!-- ========== LEFT LEG (IDs: 05, 06, 07, 08) ========== -->
+  <!-- Joint 05: Left Hip Pitch -->
+  <joint name="l_hip_pitch" type="revolute">
+    <parent link="base_link"/>
+    <child link="l_hip_pitch_link"/>
+    <origin xyz="-0.025 -0.01 -0.05" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="2.0" velocity="5.0"/>
+  </joint>
+
+  <link name="l_hip_pitch_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/hip_joint.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/hip_joint.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00002"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 06: Left Hip Roll -->
+  <joint name="l_hip_roll" type="revolute">
+    <parent link="l_hip_pitch_link"/>
+    <child link="l_thigh_link"/>
+    <origin xyz="0 0 -0.02" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.8" upper="0.8" effort="2.0" velocity="5.0"/>
+  </joint>
+
+  <link name="l_thigh_link">
+    <visual>
+      <origin xyz="0 0 -0.035" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/thigh.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.035" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/thigh.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.00007" ixy="0" ixz="0" iyy="0.00007" iyz="0" izz="0.00002"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 07: Left Knee -->
+  <joint name="l_knee" type="revolute">
+    <parent link="l_thigh_link"/>
+    <child link="l_shin_link"/>
+    <origin xyz="0 0 -0.07" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.1" upper="2.0" effort="2.0" velocity="5.0"/>
+  </joint>
+
+  <link name="l_shin_link">
+    <visual>
+      <origin xyz="0 0 -0.035" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/shin.stl"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.035" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/shin.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.12"/>
+      <inertia ixx="0.00005" ixy="0" ixz="0" iyy="0.00005" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 08: Left Ankle -->
+  <joint name="l_ankle" type="revolute">
+    <parent link="l_shin_link"/>
+    <child link="l_foot_link"/>
+    <origin xyz="0 0 -0.07" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.5" upper="0.5" effort="1.5" velocity="5.0"/>
+  </joint>
+
+  <link name="l_foot_link">
+    <visual>
+      <origin xyz="0 0.01 -0.0075" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/foot.stl"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0.01 -0.0075" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/foot.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00003" iyz="0" izz="0.00005"/>
+    </inertial>
+  </link>
+
+  <!-- ========== WAIST/TAIL (ID: 15) ========== -->
+  <!-- Joint 15: Waist/Tail -->
+  <joint name="waist_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="waist_link"/>
+    <origin xyz="0 -0.035 -0.02" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-0.5" upper="0.5" effort="1.0" velocity="5.0"/>
+  </joint>
+
+  <link name="waist_link">
+    <visual>
+      <origin xyz="0 -0.01 -0.02" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/waist.stl"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0 -0.01 -0.02" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="huno_meshes/waist.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.08"/>
+      <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00001"/>
+    </inertial>
+  </link>
+
+</robot>

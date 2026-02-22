@@ -152,34 +152,36 @@ class servo:
 
     def posGroup(self, lastId, torque, target):
         """
-        Move multiple servos simultaneously
+        Move multiple servos simultaneously (Synchronized Position Move)
+        
+        This matches the C++ SyncPosSend() implementation from wCK_Series.cpp
         
         Args:
-            lastId: Number of servos to move (e.g., 10 means ID 0-9)
+            lastId: Last servo ID to move (e.g., 9 means ID 0-9, total 10 servos)
             torque: Torque level (0=Max, 4=Min)
-            target: List of target positions for each servo
+            target: List of target positions for each servo (indices 0 to lastId)
         
         Protocol:
             Header: 0xFF
-            Data1: (torque << 5) | 31
-            Data2: lastId + 1
-            Data3~N: target positions for ID 0 to lastId-1
-            Checksum: (pos[0] ^ pos[1] ^ ... ^ pos[lastId-1]) & 0x7F
+            Data1: (torque << 5) | 0x1F
+            Data2: lastId + 2  (count of positions + 1, matching C++ logic)
+            Data3~N: target positions for ID 0 to lastId (inclusive)
+            Checksum: (pos[0] ^ pos[1] ^ ... ^ pos[lastId]) & 0x7F
         """
         self.ser.flushInput()
         
         # Header
         self.ser.write(struct.pack('<B', 0xff))
-        # Data1: Torque and mode 31 (sync move)
-        self.ser.write(struct.pack('<B', (torque << 5) | 31))
-        # Data2: lastId + 1
+        # Data1: Torque and mode 0x1F (sync move)
+        self.ser.write(struct.pack('<B', (torque << 5) | 0x1f))
+        # Data2: lastId + 1 (C++ does LastID++ then sends LastID+1)
         self.ser.write(struct.pack('<B', lastId + 1))
         
-        # Calculate checksum starting with pos[0]
-        chksum = target[0]
-        self.ser.write(struct.pack('<B', target[0]))
-        
-        for idx in range(1, lastId):
+        # Send all positions and calculate checksum
+        # print("lastId", lastId)
+        # print("target", target)
+        chksum = 0
+        for idx in range(lastId + 1):  # 0 to lastId inclusive
             self.ser.write(struct.pack('<B', target[idx]))
             chksum = chksum ^ target[idx]
         

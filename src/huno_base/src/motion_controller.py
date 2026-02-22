@@ -33,26 +33,26 @@ PLEN2_TO_HUNO_MAP = {
     "right_elbow_roll": "j_low_arm_r",          # Elbow roll / Low arm
     
     # Left leg
-    "left_thigh_yaw": "j_pelvis_l",             # Pelvis / Hip yaw
-    "left_thigh_roll": "j_thigh2_l",            # Thigh roll
-    "left_thigh_pitch": "j_tibia_l",            # Thigh pitch -> Tibia (knee area)
-    "left_knee_pitch": "j_ankle1_l",            # Knee pitch -> Ankle1
-    "left_foot_pitch": "j_ankle2_l",            # Foot pitch -> Ankle2
-    "left_foot_roll": None,                     # Not available on HUNO (16 joints)
+    "left_thigh_yaw": "",             # Pelvis / Hip yaw
+    "left_thigh_roll": "j_pelvis_l",            # Thigh roll
+    "left_thigh_pitch": "j_thigh2_l",            # Thigh pitch -> Tibia (knee area)
+    "left_knee_pitch": "j_tibia_l",            # Knee pitch -> Ankle1
+    "left_foot_pitch": "j_ankle1_l",            # Foot pitch -> Ankle2
+    "left_foot_roll": "j_ankle2_l",                     # Not available on HUNO (16 joints)
     
     # Right leg
-    "right_thigh_yaw": "j_pelvis_r",            # Pelvis / Hip yaw
-    "right_thigh_roll": "j_thigh2_r",           # Thigh roll
-    "right_thigh_pitch": "j_tibia_r",           # Thigh pitch -> Tibia
-    "right_knee_pitch": "j_ankle1_r",           # Knee pitch -> Ankle1
-    "right_foot_pitch": "j_ankle2_r",           # Foot pitch -> Ankle2
-    "right_foot_roll": None,                    # Not available on HUNO (16 joints)
+    "right_thigh_yaw": "",            # Pelvis / Hip yaw
+    "right_thigh_roll": "j_pelvis_r",           # Thigh roll
+    "right_thigh_pitch": "j_thigh2_r",           # Thigh pitch -> Tibia
+    "right_knee_pitch": "j_tibia_r",           # Knee pitch -> Ankle1
+    "right_foot_pitch": "j_ankle1_r",           # Foot pitch -> Ankle2
+    "right_foot_roll": "j_ankle2_r",                    # Not available on HUNO (16 joints)
 }
 
 # Value scaling factor: PLEN2 uses different unit scale
 # PLEN2 value range is roughly -900 to 900, servo range is 0-254
 # Zero offset is at 127, so we need to scale and offset
-PLEN2_VALUE_SCALE = 10.  # Adjust this based on actual robot behavior
+PLEN2_VALUE_SCALE = 0.1  # Adjust this based on actual robot behavior
 
 
 def load_joints():
@@ -138,6 +138,12 @@ class MotionController:
         
         # Create reverse mapping: HUNO joint name -> motor ID
         self.joint_to_id = self.joints
+        self.joint_sign = self.num_joints * [1]
+        self.joint_sign[4] = -1
+        self.joint_sign[9] = -1
+        self.joint_sign[1] = 1
+        self.joint_sign[6] = 1
+        self.joint_sign[7] = 1
         
         # Ensure motions directory exists
         if not os.path.exists(MOTIONS_DIR):
@@ -200,7 +206,7 @@ class MotionController:
         """
         # Apply scaling and add to zero offset
         offset = int(plen2_value * self.value_scale)
-        position = self.zero_offset[joint_id] + offset
+        position = self.zero_offset[joint_id] + self.joint_sign[joint_id] * offset
         
         # Clamp to valid range
         return max(0, min(254, position))

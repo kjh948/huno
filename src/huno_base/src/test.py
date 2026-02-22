@@ -47,16 +47,20 @@ def load_joints():
     return default_joints
 
 a = servo(DEFAULT_SERIAL_PORT,115200)
+a.scan()
+
 joints = load_joints()    
 zero_pos = load_zero(joints)
 print(joints["j_ankle1_l"])
 # a.pos(joints["j_ankle1_l"],4, zero_pos[joints["j_ankle1_l"]] + 10)
-
-positions = [120, 130, 140, 150, 160, 170, 180, 190, 200, 210]
-a.posGroup(10, 1, positions)  # lastId=10, torque
-
-a.posGroup(3,4,[120, 130, 62])
-input("group")
-a.pos(3,4, 62)
-input("single")
+pos0=a.readStatus(0)
+print("positions", pos0 )
+positions = [pos0+5, 130, 140, 150, 160, 170, 180, 190, 200, 210]
+a.posGroup(10, 4, zero_pos)  # lastId=10, torque
+# for i in range(10):
+#     a.pos(i,4, positions[i])
+# input("group")
+# ret = a.pos(0,4, 160)
+# print(ret)
+# input("single")
 a.close()

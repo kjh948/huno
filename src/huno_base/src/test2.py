@@ -1,7 +1,8 @@
 from wck import servo
 import time
 
-a = servo("/dev/ttyUSB0",115200)
+a = servo("/dev/tty.usbserial-14440",115200)
+a.scan()
 
 id = 15
 curpos = a.readPos(id)
