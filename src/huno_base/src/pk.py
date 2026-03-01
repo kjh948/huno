@@ -8,10 +8,10 @@ import math
 import json
 import threading
 
-# Add huno_base/src to path to import wck and config
+# huno_base/src is now current directory
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-HUNO_BASE_SRC = os.path.abspath(os.path.join(SCRIPT_DIR, '..', 'huno_base', 'src'))
-sys.path.append(HUNO_BASE_SRC)
+HUNO_BASE_SRC = SCRIPT_DIR
+# sys.path.append(HUNO_BASE_SRC) # Not strictly needed if running from same dir, but good for safety
 
 try:
     from wck import servo
@@ -56,26 +56,19 @@ class ParallelKinematicsWalk:
         self.step_height = 0.4  # Step lift (z amplitude)
         self.step_length = 0.2  # Step length (x amplitude)
         self.arm_swing = 1.0    # Arm swing magnitude
+        self.direction = -1 #forward: -1, backward: 1
+        self.side_step = 0.0    # Sideways step amplitude (y)
         
         # Scaling factor from algorithm units to servo units
         self.scale = 30.0
         
         # Joint signs (to handle mounting directions)
+        ## backward
         self.signs = {name: 1.0 for name in self.joints_map.keys()}
-        # Initial guesses for HUNO sign symmetry
-        # for name in self.signs:
-        #     if "_r" in name:
-        #         self.signs[name] = -1.0
-        self.signs["j_ankle1_l"] = -1.0
         self.signs["j_ankle1_r"] = -1.0
-        # self.signs["j_tibia_l"] = -1.0
+        self.signs["j_tibia_l"] = -1.0
+        self.signs["j_thigh2_l"] = -1.0
 
-        
-        # self.signs["j_ankle2_r"] = -1.0
-        # Specific overrides based on motion_controller.py and common biped logic
-        # Pelvis Roll (0, 5), Ankle Roll (4, 9)
-        # In HUNO, sometimes roll joints need inversion on both sides or same side.
-        
         self.is_walking = False
         self.should_exit = False
         
@@ -87,6 +80,11 @@ class ParallelKinematicsWalk:
 
         # Current target positions
         self.targets = list(self.zeros)
+
+        # Background thread for walk loop
+        self.walk_thread = threading.Thread(target=self.run_walk_loop)
+        self.walk_thread.daemon = True
+        self.walk_thread.start()
 
     def set_joint_val(self, name, val_offset):
         if name not in self.joints_map:
@@ -101,6 +99,28 @@ class ParallelKinematicsWalk:
         target = max(1, min(254, target))
         self.targets[joint_id] = target
 
+    def interpolate_pose(self, start_pose, end_pose, duration_ms, torque=4):
+        """Smoothly interpolate between two poses over a given duration"""
+        step_time_ms = 20
+        steps = max(1, int(duration_ms / step_time_ms))
+        actual_delay = duration_ms / 1000.0 / steps
+        
+        for step in range(1, steps + 1):
+            interpolated = []
+            ratio = step / float(steps)
+            for i in range(16):
+                val = start_pose[i] + (end_pose[i] - start_pose[i]) * ratio
+                interpolated.append(max(1, min(254, int(val))))
+            self.wck.posGroup(15, torque, interpolated)
+            time.sleep(actual_delay)
+        
+        # Ensure target is reached
+        self.wck.posGroup(15, torque, end_pose)
+    '''### 관절 각도 계산 원리:
+    - **무릎(`KneePitch`)**: 높이 `z`를 직접 반영
+    - **엉덩이(`HipPitch`)**: 무릎 각도의 절반을 보정 + 전후 위치 `x`
+    - **발목(`AnklePitch`)**: 무릎 각도의 절반을 반대로 보정 + 전후 위치 `x`
+    - **엉덩이/발목 롤(`Roll`)**: 좌우 위치 `y`를 반대 부호로 설정하여 발 평행 유지'''
     def left_leg(self, x, y, z):
         # Parallel Kinematics Algorithm
         self.set_joint_val("j_tibia_l",  z)          # Knee
@@ -124,13 +144,22 @@ class ParallelKinematicsWalk:
 
     def run_walk_loop(self):
         print("Walk loop started.")
+        was_walking = False
         while not self.should_exit:
             if self.is_walking:
                 # Modulate frequency
-                t = (time.time()) * self.f
+                t = (time.time()) * self.direction * self.f
                 
-                # lateral shift
-                yLeftRight = math.sin(t) * self.shift_y
+                # 1. Lateral sway for balance
+                y_sway = math.sin(t) * self.shift_y
+                
+                # 2. Individual leg lateral movement (side-step)
+                y_left_step  = math.cos(t) * self.side_step
+                y_right_step = math.cos(t + math.pi) * self.side_step
+
+                # 3. Combine sway and step
+                yLeft  = y_sway + y_left_step
+                yRight = y_sway + y_right_step
                 
                 # vertical lift (knee bend)
                 zLeft  = (math.sin(t)           + 1.0) / 2.0 * self.step_height + self.robot_height
@@ -140,18 +169,28 @@ class ParallelKinematicsWalk:
                 xLeft  = math.cos(t)           * self.step_length
                 xRight = math.cos(t + math.pi) * self.step_length
                 
-                self.left_leg(xLeft, yLeftRight, zLeft)
-                self.right_leg(xRight, yLeftRight, zRight)
+                self.left_leg(xLeft, yLeft, zLeft)
+                self.right_leg(xRight, yRight, zRight)
                 self.update_arms(xLeft, xRight)
                 
                 # Synchronized move (all 16 possible joints)
                 self.wck.posGroup(15, 4, self.targets)
+                was_walking = True
+                sleep_time = 0.02
             else:
+                if was_walking:
+                    # Smoothly return to zero position
+                    print("\nReturning to zero...")
+                    self.interpolate_pose(self.targets, self.zeros, 500)
+                    # Update targets back to zeros
+                    self.targets = list(self.zeros)
+                    was_walking = False
+                
                 # Stand at zero
                 self.wck.posGroup(15, 4, self.zeros)
-                time.sleep(0.1)
+                sleep_time = 0.1
                 
-            time.sleep(0.02) # ~50Hz
+            time.sleep(sleep_time)
 
     def start(self):
         self.is_walking = True
@@ -165,7 +204,8 @@ class ParallelKinematicsWalk:
         print("\n--- Current Parameters ---")
         print(f"  (f)  Frequency:    {self.f:<8.2f} (h)  Robot Height: {self.robot_height:.2f}")
         print(f"  (y)  Shift Y:      {self.shift_y:<8.2f} (sh) Step Height:  {self.step_height:.2f}")
-        print(f"  (sl) Step Length:   {self.step_length:<8.2f} (as) Arm Swing:    {self.arm_swing:.2f}")
+        print(f"  (sl) Step Length:   {self.step_length:<8.2f} (ss) Side Step:    {self.side_step:.2f}")
+        print(f"  (as) Arm Swing:    {self.arm_swing:<8.2f} (d)  Direction:    {self.direction:.0f}")
         print(f"  (sc) Servo Scale: {self.scale:<8.2f}")
         print("  Status: " + ("WALKING" if self.is_walking else "STOPPED"))
 
@@ -210,8 +250,10 @@ class ParallelKinematicsWalk:
                     elif cmd == 'y': self.shift_y = val
                     elif cmd == 'sh': self.step_height = val
                     elif cmd == 'sl': self.step_length = val
+                    elif cmd == 'ss': self.side_step = val
                     elif cmd == 'as': self.arm_swing = val
                     elif cmd == 'sc': self.scale = val
+                    elif cmd == 'd': self.direction = val
                     else: print(f"Unknown parameter: {cmd}")
                 except ValueError:
                     print("Invalid value format")
@@ -222,15 +264,13 @@ class ParallelKinematicsWalk:
 if __name__ == "__main__":
     pk = ParallelKinematicsWalk()
     
-    # Run walk loop in a separate thread
-    walk_thread = threading.Thread(target=pk.run_walk_loop)
-    walk_thread.daemon = True
-    walk_thread.start()
-    
     try:
         pk.interactive_menu()
     except KeyboardInterrupt:
-        pk.wck.posGroup(15, 4, pk.zeros)
+        print("\nInterrupt received, returning to zero pose...")
+        pk.is_walking = False
+        # Wait for the walk thread to finish interpolation
+        time.sleep(1.2)
         pk.should_exit = True
     
     print("Exiting...")

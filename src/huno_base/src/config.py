@@ -21,7 +21,7 @@ def get_default_serial_port():
     
     if system == 'Darwin':  # macOS
         # Find WCH USB serial devices (number changes each connection)
-        wch_devices = glob.glob('/dev/tty.wch*')
+        wch_devices = glob.glob('/dev/tty.usb*')
         if wch_devices:
             # Return the first found device
             device = sorted(wch_devices)[0]

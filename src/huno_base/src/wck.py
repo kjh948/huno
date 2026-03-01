@@ -237,7 +237,7 @@ class servo:
 
 
 if __name__=="__main__":
-    a = servo("/dev/tty.wchusbserial14340",115200)
+    a = servo("/dev/tty.usbserial-144220",115200)
 
     a.scan()
     id = 8
