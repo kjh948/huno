@@ -30,7 +30,7 @@ def get_default_serial_port():
         else:
             # Fallback if no device found
             print("Warning: No WCH USB serial device found in /dev/tty.wch*")
-            return '/dev/tty.usbserial'
+            return '/dev/tty.wchusbserial144210'
     elif system == 'Linux':
         return '/dev/ttyUSB0'
     elif system == 'Windows':
