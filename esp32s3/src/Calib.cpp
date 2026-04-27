@@ -1,5 +1,6 @@
 #include "Calib.h"
 #include <Preferences.h>
+#include <WebSerialLite.h>
 
 Calib::Calib(WCK* wck) : _wck(wck) {
 }
@@ -14,65 +15,72 @@ void Calib::loadZero() {
 }
 
 void Calib::saveZero() {
+    _print("Zero positions saved to flash.");
     Preferences prefs;
     prefs.begin("huno", false);
     prefs.putBytes("zero", zero_offsets, NUM_JOINTS);
     prefs.end();
-    Serial.println("Zero positions saved to flash.");
 }
 
 void Calib::printJoints() {
     for(int i = 0; i < NUM_JOINTS; i++) {
         int pos = _wck->readPos(i);
-        Serial.print("Joint ID ");
-        Serial.print(i);
-        Serial.print(" -> ");
-        Serial.println(pos);
+        String msg = "Joint ID " + String(i) + " -> " + String(pos);
+        _print(msg);
     }
 }
 
-void Calib::runCalibrationMenu() {
-    loadZero(); // Load from flash if available
+void Calib::_print(String msg) {
+    if (_isWebSerial) WebSerial.println(msg);
+    else Serial.println(msg);
+}
+
+void Calib::startCalibration(bool isWebSerial) {
+    loadZero();
     _wck->posGroup(15, 4, zero_offsets);
-    
-    Serial.println("\n=== HUNO Joint Calibration Tool ===");
-    Serial.println("Select Joint ID (0-15) to calibrate, 's' to save, 'x' to exit.");
-    
-    int current_id = -1;
-    
-    while(true) {
-        if(Serial.available() > 0) {
-            String input = Serial.readStringUntil('\n');
-            input.trim();
-            if(input.length() == 0) continue;
-            
-            if(input == "x") {
-                Serial.println("Exiting calibration menu.");
-                break;
-            } else if(input == "s") {
-                saveZero();
-            } else if(input == "w") { // up
-                if(current_id >= 0 && current_id < NUM_JOINTS) {
-                    zero_offsets[current_id]++;
-                    _wck->pos(current_id, 4, zero_offsets[current_id]);
-                    Serial.print("ID "); Serial.print(current_id); Serial.print(" -> "); Serial.println(zero_offsets[current_id]);
-                }
-            } else if(input == "z") { // down
-                if(current_id >= 0 && current_id < NUM_JOINTS) {
-                    zero_offsets[current_id]--;
-                    _wck->pos(current_id, 4, zero_offsets[current_id]);
-                    Serial.print("ID "); Serial.print(current_id); Serial.print(" -> "); Serial.println(zero_offsets[current_id]);
-                }
-            } else {
-                int id = input.toInt();
-                if((id >= 0 && id < NUM_JOINTS) || input == "0") {
-                    current_id = id;
-                    Serial.print("Calibrating ID ");
-                    Serial.println(current_id);
-                    Serial.println("Send 'w' to increase, 'z' to decrease.");
-                }
-            }
+    _calibMode = true;
+    _calibCurrentId = -1;
+    _isWebSerial = isWebSerial;
+    _print("=== HUNO Joint Calibration Tool ===");
+    _print("Select Joint ID (0-15), 'w'=+1, 'z'=-1, 's'=save, 'x'=exit.");
+}
+
+void Calib::processCalibInput(String input) {
+    input.trim();
+    if(input.length() == 0) {
+        _print("[Calib] ID: " + String(_calibCurrentId) + " | 'w'=+1, 'z'=-1, 's'=save, 'x'=exit");
+        return;
+    }
+
+    if(input == "x") {
+        _print("Exiting calibration menu.");
+        _calibMode = false;
+    } else if(input == "s") {
+        saveZero();
+    } else if(input == "w") {
+        if(_calibCurrentId >= 0 && _calibCurrentId < NUM_JOINTS) {
+            zero_offsets[_calibCurrentId]++;
+            _wck->pos(_calibCurrentId, 4, zero_offsets[_calibCurrentId]);
+            _print("ID " + String(_calibCurrentId) + " -> " + String(zero_offsets[_calibCurrentId]));
+        } else {
+            _print("[Calib] No joint selected. Enter joint ID first.");
         }
-        delay(50);
+    } else if(input == "z") {
+        if(_calibCurrentId >= 0 && _calibCurrentId < NUM_JOINTS) {
+            zero_offsets[_calibCurrentId]--;
+            _wck->pos(_calibCurrentId, 4, zero_offsets[_calibCurrentId]);
+            _print("ID " + String(_calibCurrentId) + " -> " + String(zero_offsets[_calibCurrentId]));
+        } else {
+            _print("[Calib] No joint selected. Enter joint ID first.");
+        }
+    } else {
+        int id = input.toInt();
+        if((id >= 0 && id < NUM_JOINTS) || input == "0") {
+            _calibCurrentId = id;
+            _print("Calibrating ID " + String(_calibCurrentId));
+            _print("Send 'w' to increase, 'z' to decrease.");
+        } else {
+            _print("[Calib] Unknown input: " + input);
+        }
     }
 }

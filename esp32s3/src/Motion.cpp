@@ -1,6 +1,7 @@
 #include "Motion.h"
 #include <LittleFS.h>
-#include <ArduinoJson.h> // Make sure to install ArduinoJson via Library Manager
+#include <ArduinoJson.h>
+#include <WebSerialLite.h>
 
 MotionController::MotionController(WCK* wck) : _wck(wck) {
     for(int i=0; i<NUM_JOINTS; i++) {
@@ -49,10 +50,21 @@ void MotionController::interpolatePose(uint8_t* start_pose, uint8_t* end_pose, i
         uint8_t interpolated[NUM_JOINTS];
         float ratio = (float)step / steps;
         for(int i = 0; i < NUM_JOINTS; i++) {
-            int val = start_pose[i] + (end_pose[i] - start_pose[i]) * ratio;
-            if (val < 1) val = 1;
-            if (val > 254) val = 254;
-            interpolated[i] = val;
+            // Calculate shortest path in 0-254 range (255 steps)
+            int diff = (int)end_pose[i] - (int)start_pose[i];
+            
+            // Wrap difference to [-127, 127]
+            if (diff > 127) diff -= 255;
+            else if (diff < -127) diff += 255;
+            
+            float target = (float)start_pose[i] + (diff * ratio);
+            int val = (int)round(target);
+            
+            // Normalize result to [0, 254]
+            while (val < 0) val += 255;
+            while (val > 254) val -= 255;
+            
+            interpolated[i] = (uint8_t)val;
         }
         _wck->posGroup(15, torque, interpolated);
         delay(step_time_ms);
@@ -105,22 +117,32 @@ void MotionController::playMotion(const char* filepath, float speed, int torque)
 }
 
 void MotionController::gotoZero() {
-    _wck->posGroup(15, 4, zero_offsets);
+    uint8_t start_pose[NUM_JOINTS];
+    for(int i=0; i<NUM_JOINTS; i++) {
+        int p = _wck->readPos(i);
+        if (p < 0) p = cur_pose[i]; 
+        start_pose[i] = p;
+    }
+    
+    interpolatePose(start_pose, zero_offsets, 3000, 4);
+    
     for(int i=0; i<NUM_JOINTS; i++) cur_pose[i] = zero_offsets[i];
-    delay(500);
 }
 
-void MotionController::setPassiveMode() {
+void MotionController::setPassiveMode(bool isWebSerial) {
     for(int i=0; i<NUM_JOINTS; i++) {
         _wck->passivate(i);
-        delay(10);
+        delay(15); // Wait for servo to process
     }
-    Serial.println("Motors are passive.");
+    String msg = "Motors are passive (Torque OFF).";
+    Serial.println(msg);
+    if (isWebSerial) WebSerial.println(msg);
 }
 
-void MotionController::printCurrentPose() {
-    Serial.println("Current Pose (PLEN2 format):");
-    Serial.print("{\"transition_time_ms\": 500, \"outputs\": [");
+void MotionController::printCurrentPose(bool isWebSerial) {
+    String out = "Current Pose (PLEN2 format):\n";
+    out += "{\"transition_time_ms\": 500, \"outputs\": [";
+
     bool first = true;
     for(int i=0; i<NUM_JOINTS; i++) {
         int raw_pos = _wck->readPos(i);
@@ -148,12 +170,18 @@ void MotionController::printCurrentPose() {
         else if(i == J_ANKLE2_R) dev = "right_foot_roll";
         
         if(dev) {
-            if(!first) Serial.print(", ");
-            Serial.print("{\"device\": \""); Serial.print(dev);
-            Serial.print("\", \"value\": "); Serial.print((int)plen2_val);
-            Serial.print("}");
+            if(!first) out += ", ";
+            out += "{\"device\": \"";
+            out += dev;
+            out += "\", \"value\": ";
+            out += String((int)plen2_val);
+            out += "}";
             first = false;
         }
     }
-    Serial.println("]}");
+    out += "]}";
+
+    // Send to the appropriate output only
+    if(isWebSerial) WebSerial.println(out);
+    else Serial.println(out);
 }

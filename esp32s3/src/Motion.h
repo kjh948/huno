@@ -13,8 +13,8 @@ public:
     void playMotion(const char* filepath, float speed = 1.0, int torque = 4);
     
     // Read current pose and generate a frame (for motion generator)
-    void printCurrentPose();
-    void setPassiveMode();
+    void printCurrentPose(bool isWebSerial = false);
+    void setPassiveMode(bool isWebSerial = false);
     void gotoZero();
 
 private:

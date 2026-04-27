@@ -15,13 +15,13 @@ void WCK::sendCmd(uint8_t data1, uint8_t data2) {
 
 int WCK::read(uint8_t timeout_ms) {
     unsigned long start = millis();
-    while(_serial->available());
-    // while(_serial->available() < 2) {
-    //     if(millis() - start > timeout_ms) return -1;
-    // }
+    while (_serial->available() < 2) {
+        if (millis() - start > timeout_ms) return -1;
+        yield();
+    }
     uint8_t data1 = _serial->read();
     uint8_t data2 = _serial->read();
-    return data2; // data1 is load, data2 is position/other
+    return data2; // data1 is load/error, data2 is position/value
 }
 
 int WCK::readPos(uint8_t id) {
@@ -50,6 +50,7 @@ void WCK::posGroup(uint8_t lastId, uint8_t torque, uint8_t* target) {
 }
 
 int WCK::passivate(uint8_t id) {
-    sendCmd((6 << 5) | id, (1 << 4) | 0x00);
+    // torque=0 releases the motor
+    sendCmd((0 << 5) | id, 0x00);
     return read();
 }
